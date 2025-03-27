@@ -45,5 +45,5 @@ func (h *Handler) RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fullURL, http.StatusSeeOther)
+	http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
 }
