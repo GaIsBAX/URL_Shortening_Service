@@ -10,7 +10,7 @@ func Run() error {
 
 	repo := repository.NewURLRepository()
 	service := service.NewURLService(repo)
-	handler := &Handler{Repo: repo, Service: service}
+	handler := &Handler{Service: service}
 
 	http.HandleFunc("/", handler.ShortenHandler)
 	http.HandleFunc("/{shortURL}", handler.RedirectHandler)

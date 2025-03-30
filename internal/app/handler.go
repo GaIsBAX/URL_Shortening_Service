@@ -1,14 +1,12 @@
 package app
 
 import (
-	"URL_shortening/internal/repository"
 	"URL_shortening/internal/service"
 	"io"
 	"net/http"
 )
 
 type Handler struct {
-	Repo    *repository.URLRepository
 	Service *service.URLService
 }
 
@@ -24,7 +22,15 @@ func (h *Handler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL := "http://localhost:8080/" + h.Service.GenerateShortURL(string(url))
+	shortURL, err := h.Service.GenerateShortURL(string(url))
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Location", shortURL)
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(shortURL))
@@ -39,11 +45,13 @@ func (h *Handler) RedirectHandler(w http.ResponseWriter, r *http.Request) {
 
 	shortURL := r.URL.Path[1:]
 
-	fullURL, err := h.Repo.GetFullURL(shortURL)
+	fullURL, err := h.Service.GetFullURL(shortURL)
 	if err != nil {
 		http.Error(w, "URL не найден", http.StatusNotFound)
 		return
 	}
 
+	// w.WriteHeader(http.StatusTemporaryRedirect)
 	http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
+
 }

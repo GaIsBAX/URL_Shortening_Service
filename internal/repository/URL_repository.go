@@ -24,6 +24,7 @@ func (ur *URLRepository) GetFullURL(shortURL string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("short URL %s not found", shortURL)
 	}
+
 	return url.FullURL, nil
 
 }
