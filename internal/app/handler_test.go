@@ -44,7 +44,21 @@ func TestHandler_ShortenHandler(t *testing.T) {
 			name: "empty body test",
 			body: "",
 			want: want{
-				statusCode: http.StatusNotFound,
+				contentType: "text/plain; charset=utf-8",
+				statusCode:  http.StatusBadRequest,
+				response:    "Invalid URL",
+			},
+			fields: fields{
+				Service: service.NewURLService(repository.NewURLRepository()),
+			},
+		},
+		{
+			name: "invalid url test",
+			body: "http://goologle.com",
+			want: want{
+				contentType: "text/plain; charset=utf-8",
+				statusCode:  http.StatusBadRequest,
+				response:    "Invalid URL",
 			},
 			fields: fields{
 				Service: service.NewURLService(repository.NewURLRepository()),
@@ -88,12 +102,14 @@ func TestHandler_RedirectHandler(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
-		fields fields
-		want   want
+		name    string
+		request string
+		fields  fields
+		want    want
 	}{
 		{
-			name: "simple test #1",
+			name:    "simple test #1",
+			request: "https://google.com",
 			want: want{
 				contentType: "text/html; charset=utf-8",
 				statusCode:  http.StatusTemporaryRedirect,
@@ -103,11 +119,23 @@ func TestHandler_RedirectHandler(t *testing.T) {
 				Service: service.NewURLService(repository.NewURLRepository()),
 			},
 		},
+		{
+			name:    "simple test #2",
+			request: "https://ya.ru",
+			want: want{
+				contentType: "text/html; charset=utf-8",
+				statusCode:  http.StatusTemporaryRedirect,
+				response:    "<a href=\"https://ya.ru\">Temporary Redirect</a>.",
+			},
+			fields: fields{
+				Service: service.NewURLService(repository.NewURLRepository()),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// 1. Отправляем POST-запрос для сокращения URL
-			r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://google.com"))
+			r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.request))
 			w := httptest.NewRecorder()
 
 			h := &Handler{Service: tt.fields.Service}

@@ -4,6 +4,8 @@ import (
 	"URL_shortening/internal/service"
 	"io"
 	"net/http"
+	"net/url"
+	"time"
 )
 
 type Handler struct {
@@ -16,17 +18,31 @@ func (h *Handler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := io.ReadAll(r.Body)
+	originalURL, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	shortURL, err := h.Service.GenerateShortURL(string(url))
+	if _, err := url.ParseRequestURI(string(originalURL)); err != nil {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
+
+	_, err = client.Get(string(originalURL))
+	resp, err := client.Get(string(originalURL))
+	if err != nil || resp.StatusCode >= 400 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+	defer resp.Body.Close()
+
+	shortURL, err := h.Service.GenerateShortURL(string(originalURL))
 
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-
 		return
 	}
 
