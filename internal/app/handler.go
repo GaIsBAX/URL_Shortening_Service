@@ -5,69 +5,78 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
 	Service *service.URLService
 }
 
-func (h *Handler) ShortenHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+func (h *Handler) ShortenHandler(c *gin.Context) {
+
+	if c.Request.Method != http.MethodPost {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
-	originalURL, err := io.ReadAll(r.Body)
+	originalURL, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
 	if _, err := url.ParseRequestURI(string(originalURL)); err != nil {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL"})
 		return
 	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
 
-	_, err = client.Get(string(originalURL))
-	resp, err := client.Get(string(originalURL))
+	resp, err := client.Get(strings.TrimSpace(string(originalURL)))
+
 	if err != nil || resp.StatusCode >= 400 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL"})
 		return
 	}
 	defer resp.Body.Close()
 
 	shortURL, err := h.Service.GenerateShortURL(string(originalURL))
-
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate short URL"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("Location", shortURL)
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(shortURL))
+	c.Header("Content-Type", "text/plain")
+	c.Header("Location", shortURL)
+	c.Status(http.StatusCreated)
+	c.Writer.Write([]byte(shortURL))
+
+	// w.Header().Set("Content-Type", "text/plain")
+	// w.Header().Set("Location", shortURL)
+	// w.WriteHeader(http.StatusCreated)
+	// w.Write([]byte(shortURL))
 }
 
-func (h *Handler) RedirectHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) RedirectHandler(c *gin.Context) {
 
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	if c.Request.Method != http.MethodGet {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
-	shortURL := r.URL.Path[1:]
+	shortURL := c.Param("shortURL")
 
 	fullURL, err := h.Service.GetFullURL(shortURL)
 	if err != nil {
-		http.Error(w, "URL не найден", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "URL not found"})
 		return
 	}
 
 	// w.WriteHeader(http.StatusTemporaryRedirect)
-	http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
-
+	// http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
+	c.Redirect(http.StatusTemporaryRedirect, fullURL)
+	// http.Redirect(c.Writer, c.Request, fullURL, http.StatusTemporaryRedirect)
 }

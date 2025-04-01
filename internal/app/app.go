@@ -3,18 +3,21 @@ package app
 import (
 	"URL_shortening/internal/repository"
 	"URL_shortening/internal/service"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func Run() error {
+
+	r := gin.Default()
 
 	repo := repository.NewURLRepository()
 	service := service.NewURLService(repo)
 	handler := &Handler{Service: service}
 
-	http.HandleFunc("/", handler.ShortenHandler)
-	http.HandleFunc("/{shortURL}", handler.RedirectHandler)
-	return http.ListenAndServe(":8080", nil)
+	r.POST("/", handler.ShortenHandler)
+	r.GET("/:shortURL", handler.RedirectHandler)
+	return r.Run(":8080")
 }
 
 // func webhook(w http.ResponseWriter, r *http.Request) {
