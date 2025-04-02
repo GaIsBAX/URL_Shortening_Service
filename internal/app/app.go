@@ -1,6 +1,7 @@
 package app
 
 import (
+	"URL_shortening/internal/config"
 	"URL_shortening/internal/repository"
 	"URL_shortening/internal/service"
 
@@ -10,6 +11,7 @@ import (
 func Run() error {
 
 	r := gin.Default()
+	cfg := config.InitConfig()
 
 	repo := repository.NewURLRepository()
 	service := service.NewURLService(repo)
@@ -17,7 +19,7 @@ func Run() error {
 
 	r.POST("/", handler.ShortenHandler)
 	r.GET("/:shortURL", handler.RedirectHandler)
-	return r.Run(":8080")
+	return r.Run(cfg.Address)
 }
 
 // func webhook(w http.ResponseWriter, r *http.Request) {
