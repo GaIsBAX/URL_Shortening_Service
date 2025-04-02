@@ -17,11 +17,6 @@ type Handler struct {
 
 func (h *Handler) ShortenHandler(c *gin.Context) {
 
-	if c.Request.Method != http.MethodPost {
-		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
-		return
-	}
-
 	originalURL, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
@@ -53,21 +48,15 @@ func (h *Handler) ShortenHandler(c *gin.Context) {
 	c.Header("Location", shortURL)
 	c.Status(http.StatusCreated)
 	c.Writer.Write([]byte(shortURL))
-
-	// w.Header().Set("Content-Type", "text/plain")
-	// w.Header().Set("Location", shortURL)
-	// w.WriteHeader(http.StatusCreated)
-	// w.Write([]byte(shortURL))
 }
 
 func (h *Handler) RedirectHandler(c *gin.Context) {
 
-	if c.Request.Method != http.MethodGet {
-		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
+	shortURL := c.Param("shortURL")
+	if shortURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Short URL is required"})
 		return
 	}
-
-	shortURL := c.Param("shortURL")
 
 	fullURL, err := h.Service.GetFullURL(shortURL)
 	if err != nil {
@@ -75,8 +64,5 @@ func (h *Handler) RedirectHandler(c *gin.Context) {
 		return
 	}
 
-	// w.WriteHeader(http.StatusTemporaryRedirect)
-	// http.Redirect(w, r, fullURL, http.StatusTemporaryRedirect)
 	c.Redirect(http.StatusTemporaryRedirect, fullURL)
-	// http.Redirect(c.Writer, c.Request, fullURL, http.StatusTemporaryRedirect)
 }

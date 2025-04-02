@@ -6,13 +6,11 @@ import (
 	"os"
 )
 
-// Config хранит настройки сервиса
 type Config struct {
-	Address string // адрес запуска HTTP-сервера
-	BaseURL string // базовый адрес результирующего сокращённого URL
+	Address string
+	BaseURL string
 }
 
-// getEnvOrDefault возвращает значение переменной окружения или значение по умолчанию
 func getEnvOrDefault(envVar, defaultValue string) string {
 	if value, exists := os.LookupEnv(envVar); exists {
 		return value
