@@ -1,6 +1,7 @@
 package app
 
 import (
+	"URL_shortening/internal/config"
 	"URL_shortening/internal/repository"
 	"URL_shortening/internal/service"
 	"io"
@@ -38,7 +39,7 @@ func TestHandler_ShortenHandler(t *testing.T) {
 				response:    "http://localhost:8080/-3f0b1fcd459b6745",
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository()),
+				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 		{
@@ -50,7 +51,7 @@ func TestHandler_ShortenHandler(t *testing.T) {
 				response:    "http://localhost:8080/-59551051e9dbca70",
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository()),
+				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 		{
@@ -58,12 +59,11 @@ func TestHandler_ShortenHandler(t *testing.T) {
 			body: "",
 			want: want{
 				contentType: "application/json; charset=utf-8",
-
-				statusCode: http.StatusBadRequest,
-				response:   `{"error":"Invalid URL"}`,
+				statusCode:  http.StatusBadRequest,
+				response:    `{"error":"Invalid URL"}`,
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository()),
+				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 		{
@@ -75,7 +75,7 @@ func TestHandler_ShortenHandler(t *testing.T) {
 				response:    `{"error":"Invalid URL"}`,
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository()),
+				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 	}
@@ -131,7 +131,7 @@ func TestHandler_RedirectHandler(t *testing.T) {
 				location:    "https://google.com",
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository()),
+				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 		{
@@ -143,7 +143,7 @@ func TestHandler_RedirectHandler(t *testing.T) {
 				location:    "https://ya.ru",
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository()),
+				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 	}

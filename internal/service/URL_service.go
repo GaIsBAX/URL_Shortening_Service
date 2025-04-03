@@ -1,6 +1,7 @@
 package service
 
 import (
+	"URL_shortening/internal/config"
 	"URL_shortening/internal/repository"
 	"fmt"
 	"strings"
@@ -8,13 +9,16 @@ import (
 
 type URLService struct {
 	urlRepository *repository.URLRepository
+	cfg           *config.Config
 }
 
-func NewURLService(urlRepository *repository.URLRepository) *URLService {
-	return &URLService{urlRepository: urlRepository}
+func NewURLService(urlRepository *repository.URLRepository, cfg *config.Config) *URLService {
+	return &URLService{urlRepository: urlRepository, cfg: cfg}
 }
 
 func (us *URLService) GenerateShortURL(URL string) (string, error) {
+
+	BaseURL := us.cfg.BaseURL
 
 	if URL = strings.TrimSpace(URL); URL == "" {
 		return "", fmt.Errorf("url cannot be empty string")
@@ -27,7 +31,7 @@ func (us *URLService) GenerateShortURL(URL string) (string, error) {
 	shortURL := fmt.Sprintf("%x", hash)
 	us.urlRepository.AddURL(shortURL, URL)
 
-	return "http://localhost:8080/" + shortURL, nil
+	return BaseURL + shortURL, nil
 }
 
 func (us *URLService) GetFullURL(shortURL string) (string, error) {
