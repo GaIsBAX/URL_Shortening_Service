@@ -1,4 +1,4 @@
-package app
+package http
 
 import (
 	"URL_shortening/internal/service"
@@ -11,11 +11,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Handler struct {
-	Service *service.URLService
+type URLHandler struct {
+	service service.URLService
 }
 
-func (h *Handler) ShortenHandler(c *gin.Context) {
+func NewURLHandler(s service.URLService) *URLHandler {
+	return &URLHandler{service: s}
+}
+
+func (h *URLHandler) ShortenHandler(c *gin.Context) {
 
 	originalURL, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -38,7 +42,7 @@ func (h *Handler) ShortenHandler(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	shortURL, err := h.Service.GenerateShortURL(string(originalURL))
+	shortURL, err := h.service.GenerateShortURL(string(originalURL))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate short URL"})
 		return
@@ -50,7 +54,7 @@ func (h *Handler) ShortenHandler(c *gin.Context) {
 	c.Writer.Write([]byte(shortURL))
 }
 
-func (h *Handler) RedirectHandler(c *gin.Context) {
+func (h *URLHandler) RedirectHandler(c *gin.Context) {
 
 	shortURL := c.Param("shortURL")
 	if shortURL == "" {
@@ -58,7 +62,7 @@ func (h *Handler) RedirectHandler(c *gin.Context) {
 		return
 	}
 
-	fullURL, err := h.Service.GetFullURL(shortURL)
+	fullURL, err := h.service.GetFullURL(shortURL)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "URL not found"})
 		return

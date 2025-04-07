@@ -7,33 +7,38 @@ import (
 	"strings"
 )
 
-type URLService struct {
-	urlRepository *repository.URLRepository
-	cfg           *config.Config
+type URLService interface {
+	GenerateShortURL(fullURL string) (string, error)
+	GetFullURL(shortURL string) (string, error)
 }
 
-func NewURLService(urlRepository *repository.URLRepository, cfg *config.Config) *URLService {
-	return &URLService{urlRepository: urlRepository, cfg: cfg}
+type urlService struct {
+	repo repository.URLRepository
+	cfg  *config.Config
 }
 
-func (us *URLService) GenerateShortURL(URL string) (string, error) {
+func NewURLService(repo repository.URLRepository, config *config.Config) URLService {
+	return &urlService{repo: repo, cfg: config}
+}
 
-	BaseURL := us.cfg.BaseURL
+func (s *urlService) GenerateShortURL(fullURL string) (string, error) {
 
-	if URL = strings.TrimSpace(URL); URL == "" {
+	BaseURL := s.cfg.BaseURL
+
+	if fullURL = strings.TrimSpace(fullURL); fullURL == "" {
 		return "", fmt.Errorf("url cannot be empty string")
 	}
 
 	hash := 0
-	for _, char := range URL {
+	for _, char := range fullURL {
 		hash = int(char) + (hash << 6) + (hash << 16) - hash
 	}
 	shortURL := fmt.Sprintf("%x", hash)
-	us.urlRepository.AddURL(shortURL, URL)
+	s.repo.Save(shortURL, fullURL)
 
 	return BaseURL + shortURL, nil
 }
 
-func (us *URLService) GetFullURL(shortURL string) (string, error) {
-	return us.urlRepository.GetFullURL(shortURL)
+func (s *urlService) GetFullURL(shortURL string) (string, error) {
+	return s.repo.Get(shortURL)
 }

@@ -7,26 +7,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type URLRepository struct {
+type URLRepository interface {
+	Save(shortURL string, fullURL string) error
+	Get(shortURL string) (string, error)
+}
+
+type inMemoryRepo struct {
 	urls map[string]model.URL
 }
 
-func NewURLRepository() *URLRepository {
-	return &URLRepository{urls: make(map[string]model.URL)}
+func NewInMemoryRepository() URLRepository {
+	return &inMemoryRepo{urls: make(map[string]model.URL)}
 }
 
-func (ur *URLRepository) AddURL(shortURL string, fullURL string) error {
+func (r *inMemoryRepo) Save(shortURL string, fullURL string) error {
 
-	if _, exists := ur.urls[shortURL]; exists {
+	if _, exists := r.urls[shortURL]; exists {
 		return gin.Error{Err: fmt.Errorf("short URL %s already exists", shortURL), Type: gin.ErrorTypePublic}
 	}
 
-	ur.urls[shortURL] = model.URL{ShortURL: shortURL, FullURL: fullURL}
+	r.urls[shortURL] = model.URL{ShortURL: shortURL, FullURL: fullURL}
 	return nil
 }
 
-func (ur *URLRepository) GetFullURL(shortURL string) (string, error) {
-	url, exists := ur.urls[shortURL]
+func (r *inMemoryRepo) Get(shortURL string) (string, error) {
+	url, exists := r.urls[shortURL]
 	if !exists {
 		return "", gin.Error{Err: fmt.Errorf("short URL %s not found", shortURL), Type: gin.ErrorTypePublic}
 	}

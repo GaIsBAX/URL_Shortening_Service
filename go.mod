@@ -4,6 +4,8 @@ go 1.23.5
 
 require github.com/stretchr/testify v1.10.0
 
+require github.com/joho/godotenv v1.5.1
+
 require (
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect

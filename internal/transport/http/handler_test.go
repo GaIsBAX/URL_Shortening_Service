@@ -1,4 +1,4 @@
-package app
+package http
 
 import (
 	"URL_shortening/internal/config"
@@ -39,7 +39,7 @@ func TestHandler_ShortenHandler(t *testing.T) {
 				response:    "http://localhost:8080/-3f0b1fcd459b6745",
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
+				// Service: service.NewURLService(repository.NewInMemoryRepository()),
 			},
 		},
 		{
@@ -51,7 +51,7 @@ func TestHandler_ShortenHandler(t *testing.T) {
 				response:    "http://localhost:8080/-59551051e9dbca70",
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
+				// Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 		{
@@ -63,7 +63,7 @@ func TestHandler_ShortenHandler(t *testing.T) {
 				response:    `{"error":"Invalid URL"}`,
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
+				// Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 		{
@@ -75,7 +75,7 @@ func TestHandler_ShortenHandler(t *testing.T) {
 				response:    `{"error":"Invalid URL"}`,
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
+				// Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 	}
@@ -83,9 +83,7 @@ func TestHandler_ShortenHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := gin.Default()
-			h := &Handler{
-				Service: tt.fields.Service,
-			}
+			h := NewURLHandler(service.NewURLService(repository.NewInMemoryRepository(), config.InitConfig()))
 
 			r.POST("/", h.ShortenHandler)
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
@@ -131,7 +129,7 @@ func TestHandler_RedirectHandler(t *testing.T) {
 				location:    "https://google.com",
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
+				// Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 		{
@@ -143,14 +141,15 @@ func TestHandler_RedirectHandler(t *testing.T) {
 				location:    "https://ya.ru",
 			},
 			fields: fields{
-				Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
+				// Service: service.NewURLService(repository.NewURLRepository(), config.InitConfig()),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := gin.Default()
-			h := &Handler{Service: tt.fields.Service}
+
+			h := NewURLHandler(service.NewURLService(repository.NewInMemoryRepository(), config.InitConfig()))
 
 			r.POST("/", h.ShortenHandler)
 			r.GET("/:shortURL", h.RedirectHandler)
